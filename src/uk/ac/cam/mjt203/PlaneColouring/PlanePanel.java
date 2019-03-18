@@ -73,8 +73,14 @@ public class PlanePanel extends JPanel implements MouseListener {
 
 
         g.setColor(Color.BLACK);
-        final int distanceFromCorner = 10;
-        g.drawString("Number of colours: "+plane.getColourCount(), distanceFromCorner, this.getHeight()-distanceFromCorner);
+        final int distanceFromCorner = 20;
+        g.drawString("Number of colours: "+plane.getColourCount(), distanceFromCorner, this.getHeight()-2*distanceFromCorner);
+
+        g.drawString("Selected colour", 2*distanceFromCorner, this.getHeight()-distanceFromCorner);
+
+        g.setColor(ColourEncoder.getColour(picker.getCurrentColourId()));
+        g.fillRect(distanceFromCorner/2, this.getHeight()-3*distanceFromCorner/2,
+                distanceFromCorner, distanceFromCorner);
     }
 
     public void display(ColouredPlane plane) {

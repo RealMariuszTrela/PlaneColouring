@@ -50,7 +50,7 @@ public class GUI extends JFrame implements ListSelectionListener {
     }
 
     private JPanel createColourPickingPanel() {
-        picker = new ColourPickingPanel();
+        picker = new ColourPickingPanel(this);
         picker.setMinimumSize(new Dimension(100, 100));
         return picker;
     }
@@ -60,6 +60,10 @@ public class GUI extends JFrame implements ListSelectionListener {
         JList<ColouredPlane> list = (JList<ColouredPlane>) e.getSource();
         ColouredPlane p = list.getSelectedValue();
         mainPanel.display(p);
+    }
+
+    public void update() {
+        mainPanel.repaint();
     }
 
     public static void main(String[] args) throws IOException {

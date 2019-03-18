@@ -11,14 +11,17 @@ public class ColourPickingPanel extends JPanel {
 
     private int currentColour = -1;
 
-    public ColourPickingPanel() {
+    private GUI parent;
+
+    public ColourPickingPanel(GUI parent) {
+        this.parent = parent;
         setLayout(new GridLayout(1, size));
         for (int i = 0; i < 10; ++i) {
             JButton button = new JButton(Integer.toString(i));
             button.setBackground(ColourEncoder.getColour(i));
             button.setMinimumSize(new Dimension(50, 50));
             int k = i;
-            button.addActionListener(e -> {currentColour = k;});
+            button.addActionListener(e -> {currentColour = k; parent.update();});
             add(button);
         }
     }
