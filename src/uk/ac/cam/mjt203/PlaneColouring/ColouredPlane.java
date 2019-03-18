@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class ColouredPlane implements Comparable<ColouredPlane> {
+public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
     private final int p;
     private int[][] colours;
     private final int r;
@@ -235,4 +235,18 @@ public class ColouredPlane implements Comparable<ColouredPlane> {
         return name;
     }
 
+
+    @Override
+    public ColouredPlane clone() {
+        try {
+            ColouredPlane other = (ColouredPlane) super.clone();
+            other.colours = new int[p][p];
+            for(int i=0; i<p; ++i) for(int j=0; j<p; ++j) {
+                other.colours[i][j] = colours[i][j];
+            }
+            return other;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Fuck bullshit exceptions "+e.toString());
+        }
+    }
 }

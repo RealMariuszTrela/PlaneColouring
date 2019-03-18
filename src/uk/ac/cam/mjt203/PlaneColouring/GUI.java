@@ -7,11 +7,20 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class GUI extends JFrame implements ListSelectionListener {
     private PlanePanel mainPanel;
     private ColouredPlaneStore store;
     private ColourPickingPanel picker;
+    private ColouredPlane workingPlane;
+    private JPanel sidePanel;
+    private Map<String, ColouredPlane> editedPlanes = new HashMap<>();
+    private Map<String, ColouredPlane> originalPlanes = new HashMap<>();
+
 
     public GUI(ColouredPlaneStore store) {
         super("Plane colouring");
@@ -22,9 +31,7 @@ public class GUI extends JFrame implements ListSelectionListener {
         add(createColourPickingPanel(), BorderLayout.SOUTH);
         add(createColouringsPanel(), BorderLayout.WEST);
         add(createMainPanel(picker), BorderLayout.CENTER);
-
-
-        mainPanel.display(new ColouredPlane(5, ":P"));
+        add(createSidePanel(), BorderLayout.EAST);
     }
 
     private void addBorder(JComponent component, String title) {
@@ -55,15 +62,38 @@ public class GUI extends JFrame implements ListSelectionListener {
         return picker;
     }
 
+    private JPanel createSidePanel() {
+        sidePanel = new JPanel();
+        sidePanel.setLayout(new GridLayout(3, 1));
+        JButton button = new JButton("Restore original");
+        button.addActionListener(e -> restore());
+        sidePanel.add(button);
+        return sidePanel;
+    }
+
     @Override
     public void valueChanged(ListSelectionEvent e) {
         JList<ColouredPlane> list = (JList<ColouredPlane>) e.getSource();
-        ColouredPlane p = list.getSelectedValue();
-        mainPanel.display(p);
+        workingPlane = list.getSelectedValue().clone();
+        if(editedPlanes.containsKey(workingPlane.toString())) {
+            workingPlane = editedPlanes.get(workingPlane.toString());
+        }
+        else {
+            editedPlanes.put(workingPlane.toString(), workingPlane);
+            originalPlanes.put(workingPlane.toString(), list.getSelectedValue());
+        }
+        mainPanel.display(workingPlane);
     }
 
     public void update() {
         mainPanel.repaint();
+    }
+
+    private void restore() {
+        if(workingPlane == null) return;
+        workingPlane = originalPlanes.get(workingPlane.toString()).clone();
+        editedPlanes.put(workingPlane.toString(), workingPlane);
+        mainPanel.display(workingPlane);
     }
 
     public static void main(String[] args) throws IOException {
