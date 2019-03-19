@@ -8,7 +8,7 @@ public class ColourEncoder {
     private static Map<Integer, Color> colourEncoding = new HashMap<>();
     static {
         colourEncoding.put(-1, Color.GRAY);
-        colourEncoding.put(0, Color.DARK_GRAY);
+        colourEncoding.put(0, Color.LIGHT_GRAY);
     }
     private static Color getColourOfId(int id) {
         float hue = ((133*id)%231)/231.0f;

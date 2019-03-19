@@ -14,6 +14,8 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
     private final int r;
     private final String name;
 
+    private PPoint displayBase1 = new PPoint(0, 1), displayBase2 = new PPoint(1, 0);
+
     @Override
     public int compareTo(ColouredPlane other) {
         return name.compareTo(other.name);
@@ -86,33 +88,39 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
 
         public Set<Line2D.Float> toPrint() {
             Line l = getDisplayed().optimizeLineStep();
+            Point2D.Float dir = getCoord(l.step, true);
+            if(dir.x>0.5) dir.x -= 1.0f;
+            if(dir.y>0.5) dir.y -= 1.0f;
             Set<Line2D.Float> res = new HashSet<>();
             for(int i=0; i<p; ++i) {
                 PPoint a = l.start.add(l.step.multiply(i));
                 PPoint b = l.start.add(l.step.multiply(i+1));
                 Point2D.Float fa = getCoord(a, true);
                 Point2D.Float fb = getCoord(b, true);
-                Point2D.Float dir = getCoord(l.step, true);
-                if(dir.x>0.5) dir.x -= 1.0f;
-                if(dir.y>0.5) dir.y -= 1.0f;
+
                 float remTime = 1.0f;
                 while(true)
                 {
-                    float minTime = 1.0f;
+                    float minTime = 2.0f;
                     float tmp = (1.0f-0.5f/p-fa.x)/dir.x;
-                    if(tmp<minTime && tmp>0) minTime = tmp;
+                    if(tmp<minTime && tmp>0.01) minTime = tmp;
                     tmp = (1.0f-0.5f/p-fa.y)/dir.y;
-                    if(tmp<minTime && tmp>0) minTime = tmp;
+                    if(tmp<minTime && tmp>0.01) minTime = tmp;
                     tmp = (-0.5f/p-fa.x)/dir.x;
-                    if(tmp<minTime && tmp>0) minTime = tmp;
+                    if(tmp<minTime && tmp>0.01) minTime = tmp;
                     tmp = (-0.5f/p-fa.y)/dir.y;
-                    if(tmp<minTime && tmp>0) minTime = tmp;
+                    if(tmp<minTime && tmp>0.01) minTime = tmp;
 
                     if(minTime>remTime) break;
                     Point2D.Float intPoint = new Point2D.Float(fa.x+minTime*dir.x, fa.y+minTime*dir.y);
                     res.add(new Line2D.Float(fa, intPoint));
-                    fa = new Point2D.Float(fb.x-(remTime-minTime+0.0001f)*dir.x, fb.y-(remTime-minTime+0.0001f)*dir.y);
-                    remTime -= minTime+0.0001f;
+                    fa = intPoint;
+                    if(fa.x <=-0.5f/p+0.001) fa.x += 1;
+                    else if(fa.x >= 1-0.5f/p-0.001) fa.x -=1;
+
+                    if(fa.y <=-0.5f/p+0.001) fa.y += 1;
+                    else if(fa.y >= 1-0.5f/p-0.001) fa.y -=1;
+                    remTime -= minTime;
                 }
                 res.add(new Line2D.Float(fa, fb));
             }
@@ -175,7 +183,7 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
     }
 
     public PPoint getDisplayed(PPoint pt) {
-        return pt;
+        return displayBase1.multiply(pt.x).add(displayBase2.multiply(pt.y));
     }
 
     public Point2D.Float getCoord(int row, int col, boolean fromDisplayed) {
@@ -192,9 +200,20 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
     public PPoint getPoint(float x, float y, double sensitivity) {
 
 
-        PPoint res = new PPoint((int)(x*p+0.5), (int)(y*p+0.5));
-        float dist_sq = (res.x-x*p)*(res.x-x*p)+(res.y-y*p)*(res.y-y*p);
+        PPoint inDisplay = new PPoint((int)(x*p+0.5), (int)(y*p+0.5));
+
+        float dist_sq = (inDisplay.x-x*p)*(inDisplay.x-x*p)+(inDisplay.y-y*p)*(inDisplay.y-y*p);
         if(dist_sq>sensitivity*sensitivity) return new PPoint(-1, -1);
+
+        PPoint res = new PPoint(0, 0);
+        for(int i=0; i<p; ++i) for(int j=0; j<p; ++j) {
+            if(getDisplayed(new PPoint(i, j)).equals(inDisplay)) {
+                res = new PPoint(i, j);
+                break;
+            }
+        }
+
+
         return res;
     }
 
@@ -248,5 +267,17 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException("Fuck bullshit exceptions "+e.toString());
         }
+    }
+
+    public void slide1(int amount) {
+        amount = (amount+p)%p;
+        displayBase1 = new PPoint(displayBase1.x, (displayBase1.y+amount*displayBase1.x)%p);
+        displayBase2 = new PPoint(displayBase2.x, (displayBase2.y+amount*displayBase2.x)%p);
+    }
+
+    public void slide2(int amount) {
+        amount = (amount+p)%p;
+        displayBase1 = new PPoint((displayBase1.x+amount*displayBase1.y)%p, displayBase1.y);
+        displayBase2 = new PPoint((displayBase2.x+amount*displayBase2.y)%p, displayBase2.y);
     }
 }

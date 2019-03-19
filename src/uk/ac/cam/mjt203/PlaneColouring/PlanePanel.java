@@ -35,6 +35,8 @@ public class PlanePanel extends JPanel implements MouseListener {
 
         squareSize = Math.min(this.getWidth(), this.getHeight())/(plane.getP()+1.0f);
 
+
+
         g.setStroke(new BasicStroke(5));
 
         for(ColouredPlane.Line l: plane.getViolatingLines()) {
@@ -81,6 +83,10 @@ public class PlanePanel extends JPanel implements MouseListener {
         g.setColor(ColourEncoder.getColour(picker.getCurrentColourId()));
         g.fillRect(distanceFromCorner/2, this.getHeight()-3*distanceFromCorner/2,
                 distanceFromCorner, distanceFromCorner);
+
+        g.setStroke(new BasicStroke(7));
+        g.setColor(Color.BLACK);
+        g.drawRect((int)squareSize/2, (int)squareSize/2, (int)(plane.getP()*squareSize), (int)(plane.getP()*squareSize));
     }
 
     public void display(ColouredPlane plane) {

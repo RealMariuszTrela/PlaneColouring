@@ -18,6 +18,7 @@ public class GUI extends JFrame implements ListSelectionListener {
     private ColourPickingPanel picker;
     private ColouredPlane workingPlane;
     private JPanel sidePanel;
+    private PlaneShufflerPanel shuffler;
     private Map<String, ColouredPlane> editedPlanes = new HashMap<>();
     private Map<String, ColouredPlane> originalPlanes = new HashMap<>();
 
@@ -68,6 +69,10 @@ public class GUI extends JFrame implements ListSelectionListener {
         JButton button = new JButton("Restore original");
         button.addActionListener(e -> restore());
         sidePanel.add(button);
+
+        shuffler = new PlaneShufflerPanel(this, workingPlane);
+        sidePanel.add(shuffler);
+
         return sidePanel;
     }
 
@@ -83,10 +88,12 @@ public class GUI extends JFrame implements ListSelectionListener {
             originalPlanes.put(workingPlane.toString(), list.getSelectedValue());
         }
         mainPanel.display(workingPlane);
+        shuffler.setPlane(workingPlane);
     }
 
     public void update() {
         mainPanel.repaint();
+        shuffler.setPlane(workingPlane);
     }
 
     private void restore() {
