@@ -4,12 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
-public class ColourPickingPanel extends JPanel {
+public class ColourPickingPanel extends JPanel implements KeyListener {
 
     private int size = 10;
 
-    private int currentColour = -1;
+    private int currentColour = 0;
 
     private GUI parent;
 
@@ -30,4 +32,22 @@ public class ColourPickingPanel extends JPanel {
         return currentColour;
     }
 
+    @Override
+    public void keyTyped(KeyEvent keyEvent) {
+    }
+
+    @Override
+    public void keyPressed(KeyEvent keyEvent) {
+        char c = keyEvent.getKeyChar();
+        if(c>='0' && c<= '9')
+        {
+            currentColour = c-'0';
+            parent.update();
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent keyEvent) {
+
+    }
 }

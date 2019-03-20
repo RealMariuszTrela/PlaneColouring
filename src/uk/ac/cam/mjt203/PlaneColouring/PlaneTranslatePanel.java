@@ -7,11 +7,11 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-public class PlaneShufflerPanel extends JPanel implements KeyListener {
+public class PlaneTranslatePanel extends JPanel implements KeyListener {
     private ColouredPlane plane;
     private GUI parent;
 
-    public PlaneShufflerPanel(GUI parent, ColouredPlane plane) {
+    public PlaneTranslatePanel(GUI parent, ColouredPlane plane) {
         super();
 
         this.parent = parent;
@@ -20,40 +20,39 @@ public class PlaneShufflerPanel extends JPanel implements KeyListener {
         JPanel topButtons = new JPanel();
         topButtons.setLayout(new GridLayout(2, 1));
 
-        JButton top = new JButton("^ (W)");
-        top.addActionListener(e -> {slide(1, -1);});
+        JButton top = new JButton("^");
+        top.addActionListener(e -> {translate(0, -1);});
         topButtons.add(top);
-        JButton bottom = new JButton("v (S)");
-        bottom.addActionListener(e -> {slide(1, 1);});
+        JButton bottom = new JButton("v");
+        bottom.addActionListener(e -> {translate(0, 1);});
         topButtons.add(bottom);
         add(topButtons);
 
         JPanel bottomButtons = new JPanel();
         bottomButtons.setLayout(new GridLayout(1, 2));
 
-        JButton left = new JButton("< (A)");
-        left.addActionListener(e -> {slide(2, -1);});
+        JButton left = new JButton("<");
+        left.addActionListener(e -> {translate(-1, 0);});
         bottomButtons.add(left);
-        JButton right = new JButton("> (D)");
-        right.addActionListener(e -> {slide(2, 1);});
+        JButton right = new JButton(">");
+        right.addActionListener(e -> {translate(1, 0);});
         bottomButtons.add(right);
         add(bottomButtons);
 
         Border etch = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
-        Border tb = BorderFactory.createTitledBorder(etch,LanguageTranslator.getTranslation(parent.getLanguage(),"Slide"));
+        Border tb = BorderFactory.createTitledBorder(etch,LanguageTranslator.getTranslation(parent.getLanguage(),"Translate"));
         setBorder(tb);
 
     }
 
-    public void slide(int dir, int amount) {
-        if(plane==null) return;
-        if(dir==1) plane.slide1(amount);
-        else plane.slide2(amount);
-        parent.update();
-    }
-
     public void setPlane(ColouredPlane plane) {
         this.plane = plane;
+    }
+
+    public void translate(int x, int y) {
+        if(plane==null) return;
+        plane.offsetBy(x, y);
+        parent.update();
     }
 
     @Override
@@ -63,17 +62,18 @@ public class PlaneShufflerPanel extends JPanel implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if(e.getKeyCode()== KeyEvent.VK_W) {
-            slide(1, -1);
+
+        if(e.getKeyCode()== KeyEvent.VK_UP) {
+            translate(0, -1);
         }
-        if(e.getKeyCode()== KeyEvent.VK_S) {
-            slide(1, 1);
+        if(e.getKeyCode()== KeyEvent.VK_DOWN) {
+            translate(0, 1);
         }
-        if(e.getKeyCode()== KeyEvent.VK_A) {
-            slide(2, -1);
+        if(e.getKeyCode()== KeyEvent.VK_LEFT) {
+            translate(-1, 0);
         }
-        if(e.getKeyCode()== KeyEvent.VK_D) {
-            slide(2, 1);
+        if(e.getKeyCode()== KeyEvent.VK_RIGHT) {
+            translate(1, 0);
         }
     }
 

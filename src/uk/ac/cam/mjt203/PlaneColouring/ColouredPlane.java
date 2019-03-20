@@ -7,14 +7,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static uk.ac.cam.mjt203.PlaneColouring.LineInPlaneWithColour.lineFromString;
 
-public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
+
+public class ColouredPlane implements Comparable<ColouredPlane> {
     private final int p;
     private int[][] colours;
     private final int r;
     private final String name;
 
     private PPoint displayBase1 = new PPoint(0, 1), displayBase2 = new PPoint(1, 0);
+    private PPoint origin = new PPoint(0, 0);
+
+
+    private Set<LineInPlaneWithColour> markedLines = new HashSet<>();
+
 
     @Override
     public int compareTo(ColouredPlane other) {
@@ -52,83 +59,9 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
         }
     }
 
-    public class Line {
-        final PPoint start, step;
-        public Line(PPoint start, PPoint step) {
-            this.start = start;
-            this.step = step;
-        }
-        public int getColourCount() {
-            Set<Integer> colourSet = new HashSet<>();
-            for(PPoint pt: pointsOnLine()) colourSet.add(getColour(pt));
-            colourSet.remove(-1);
-            return colourSet.size();
-        }
-
-        public List<PPoint> pointsOnLine() {
-            List<PPoint> res = new ArrayList<>();
-            for(int i=0; i<p; ++i) res.add(start.add(step.multiply(i)));
-            return res;
-        }
-
-        public Line getDisplayed() {
-            return new Line(ColouredPlane.this.getDisplayed(start),
-                    ColouredPlane.this.getDisplayed(start.add(step)).subtract(ColouredPlane.this.getDisplayed(start)));
-        }
-
-        public Line optimizeLineStep() {
-            PPoint best = step;
-            for(PPoint pt: pointsOnLine()) if(!pt.equals(start)) {
-                if(pt.subtract(start).realDistanceSq()<best.realDistanceSq()) {
-                    best = pt.subtract(start);
-                }
-            }
-            return new Line(start, best);
-        }
-
-        public Set<Line2D.Float> toPrint() {
-            Line l = getDisplayed().optimizeLineStep();
-            Point2D.Float dir = getCoord(l.step, true);
-            if(dir.x>0.5) dir.x -= 1.0f;
-            if(dir.y>0.5) dir.y -= 1.0f;
-            Set<Line2D.Float> res = new HashSet<>();
-            for(int i=0; i<p; ++i) {
-                PPoint a = l.start.add(l.step.multiply(i));
-                PPoint b = l.start.add(l.step.multiply(i+1));
-                Point2D.Float fa = getCoord(a, true);
-                Point2D.Float fb = getCoord(b, true);
-
-                float remTime = 1.0f;
-                while(true)
-                {
-                    float minTime = 2.0f;
-                    float tmp = (1.0f-0.5f/p-fa.x)/dir.x;
-                    if(tmp<minTime && tmp>0.01) minTime = tmp;
-                    tmp = (1.0f-0.5f/p-fa.y)/dir.y;
-                    if(tmp<minTime && tmp>0.01) minTime = tmp;
-                    tmp = (-0.5f/p-fa.x)/dir.x;
-                    if(tmp<minTime && tmp>0.01) minTime = tmp;
-                    tmp = (-0.5f/p-fa.y)/dir.y;
-                    if(tmp<minTime && tmp>0.01) minTime = tmp;
-
-                    if(minTime>remTime) break;
-                    Point2D.Float intPoint = new Point2D.Float(fa.x+minTime*dir.x, fa.y+minTime*dir.y);
-                    res.add(new Line2D.Float(fa, intPoint));
-                    fa = intPoint;
-                    if(fa.x <=-0.5f/p+0.001) fa.x += 1;
-                    else if(fa.x >= 1-0.5f/p-0.001) fa.x -=1;
-
-                    if(fa.y <=-0.5f/p+0.001) fa.y += 1;
-                    else if(fa.y >= 1-0.5f/p-0.001) fa.y -=1;
-                    remTime -= minTime;
-                }
-                res.add(new Line2D.Float(fa, fb));
-            }
-            return res;
-        }
 
 
-    }
+
 
     public ColouredPlane(int p, String name) {
         this.p = p;
@@ -161,6 +94,13 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
         int rval = p-1;
         while(ModularArithmetic.power(rval, (p-1)/2, p)!=p-1) --rval;
         r = rval;
+
+        if(basicSplit.length>3) {
+            String[] lines = basicSplit[3].split("-");
+            for(String l: lines) {
+                markedLines.add(lineFromString(this, l));
+            }
+        }
     }
 
     public int getColour(PPoint a) {
@@ -183,7 +123,7 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
     }
 
     public PPoint getDisplayed(PPoint pt) {
-        return displayBase1.multiply(pt.x).add(displayBase2.multiply(pt.y));
+        return displayBase1.multiply(pt.x).add(displayBase2.multiply(pt.y)).add(origin);
     }
 
     public Point2D.Float getCoord(int row, int col, boolean fromDisplayed) {
@@ -228,21 +168,21 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
 
 
 
-    public Set<Line> getAllLines() {
-        Set<Line> lines = new HashSet<>();
+    public Set<LineInPlane> getAllLines() {
+        Set<LineInPlane> lines = new HashSet<>();
         for(int j=0; j<p; ++j) for(int k=0; k<p; ++k) {
-            lines.add(new Line(new PPoint(0, j), new PPoint(1, k)));
+            lines.add(new LineInPlane(new PPoint(0, j), new PPoint(1, k)));
         }
         for(int i=0; i<p; ++i) {
-            lines.add(new Line(new PPoint(i, 0), new PPoint(0, 1)));
+            lines.add(new LineInPlane(new PPoint(i, 0), new PPoint(0, 1)));
         }
         return lines;
     }
 
-    public Set<Line> getViolatingLines() {
-        Set<Line> violatingLines = new HashSet<>();
-        for(Line l: getAllLines()) {
-            if(l.getColourCount()>3) {
+    public Set<LineInPlane> getViolatingLines() {
+        Set<LineInPlane> violatingLines = new HashSet<>();
+        for(LineInPlane l: getAllLines()) {
+            if(l.getColourCount(this)>3) {
                 violatingLines.add(l);
             }
         }
@@ -255,18 +195,20 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
     }
 
 
-    @Override
-    public ColouredPlane clone() {
-        try {
-            ColouredPlane other = (ColouredPlane) super.clone();
-            other.colours = new int[p][p];
-            for(int i=0; i<p; ++i) for(int j=0; j<p; ++j) {
-                other.colours[i][j] = colours[i][j];
-            }
-            return other;
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Fuck bullshit exceptions "+e.toString());
+    public ColouredPlane(ColouredPlane other) {
+        p = other.p;
+        r = other.r;
+        name = other.name;
+        displayBase1 = other.displayBase1;
+        displayBase2 = other.displayBase2;
+
+        colours = new int[p][p];
+        for(int i=0; i<p; ++i) for(int j=0; j<p; ++j) {
+            colours[i][j] = other.colours[i][j];
         }
+        markedLines = new HashSet<>();
+
+        markedLines.addAll(other.markedLines);
     }
 
     public void slide1(int amount) {
@@ -280,4 +222,27 @@ public class ColouredPlane implements Comparable<ColouredPlane>, Cloneable{
         displayBase1 = new PPoint((displayBase1.x+amount*displayBase1.y)%p, displayBase1.y);
         displayBase2 = new PPoint((displayBase2.x+amount*displayBase2.y)%p, displayBase2.y);
     }
+
+    public void offsetBy(PPoint pt) {
+        origin = origin.add(pt);
+    }
+
+    public void offsetBy(int x, int y) {
+        origin = origin.add(new PPoint((x+p)%p, (y+p)%p));
+    }
+
+    public void addLine(PPoint a, PPoint b, int colourId) {
+        if(a.x<0||a.y<0||b.x<0||b.y<0) return;
+        if(a.equals(b)) return;
+        markedLines.add(new LineInPlaneWithColour(a, b.subtract(a), colourId));
+    }
+
+    public Set<LineInPlaneWithColour> getMarkedLines() {
+        return markedLines;
+    }
+
+    public void clearMarkedLines() {
+        markedLines.clear();
+    }
+
 }
